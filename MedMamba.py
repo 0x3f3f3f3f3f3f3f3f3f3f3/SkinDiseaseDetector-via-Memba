@@ -656,14 +656,32 @@ class VSSLayer_up(nn.Module):
             else:
                 x = blk(x)
         return x
-    
+
+
+class MLP(nn.Module):
+    def __init__(self, input_dim, hidden_dims, output_dim):
+        super(MLP, self).__init__()
+        MLP_Layers = []
+        self.prev_dim = input_dim
+        self.output_dim = output_dim
+        for hdim in hidden_dims:
+            MLP_Layers.append(nn.Linear(self.prev_dim, hdim))
+            MLP_Layers.append(nn.ReLU())
+            self.prev_dim = hdim
+
+        self.MLP = nn.Sequential(*MLP_Layers)
+
+    def forward(self, x):
+        x=self.MLP(x)
+        nn.Linear(self.prev_dim, self.output_dim)
+        return x
 
 
 class VSSM(nn.Module):
-    def __init__(self, patch_size=4, in_chans=3, num_classes=1000, depths=[2, 2, 4, 2], depths_decoder=[2, 9, 2, 2],
+    def __init__(self, MLP_input_dim, MLP_hidden_dims,patch_size=4, in_chans=3, num_classes=1000, depths=[2, 2, 4, 2], depths_decoder=[2, 9, 2, 2],
                  dims=[96,192,384,768], dims_decoder=[768, 384, 192, 96], d_state=16, drop_rate=0., attn_drop_rate=0., drop_path_rate=0.1,
                  norm_layer=nn.LayerNorm, patch_norm=True,
-                 use_checkpoint=False, **kwargs):
+                 use_checkpoint=False,  **kwargs):
         super().__init__()
         self.num_classes = num_classes
         self.num_layers = len(depths)
@@ -703,16 +721,27 @@ class VSSM(nn.Module):
                 use_checkpoint=use_checkpoint,
             )
             self.layers.append(layer)
+        # MLP
+        MLP_Layers = []
+        self.prev_dim = MLP_input_dim
+        self.output_dim = num_classes
+        for hdim in MLP_hidden_dims:
+            MLP_Layers.append(nn.Linear(self.prev_dim, hdim))
+            MLP_Layers.append(nn.ReLU())
+            self.prev_dim = hdim
+
+        self.MLP = nn.Sequential(*MLP_Layers)
 
 
         # self.norm = norm_layer(self.num_features)
         self.avgpool = nn.AdaptiveAvgPool2d(1)
-        self.head = nn.Linear(self.num_features, num_classes) if num_classes > 0 else nn.Identity()
+        self.head = nn.Linear(self.num_features+self.prev_dim, num_classes) if num_classes > 0 else nn.Identity()
 
         self.apply(self._init_weights)
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+
     def _init_weights(self, m: nn.Module):
         """
         out_proj.weight which is previously initilized in SS_Conv_SSM, would be cleared in nn.Linear
@@ -748,19 +777,23 @@ class VSSM(nn.Module):
             x = layer(x)
         return x
 
-    def forward(self, x):
+    def forward(self, x, text):
         x = self.forward_backbone(x)
         x = x.permute(0,3,1,2)
         x = self.avgpool(x)
         x = torch.flatten(x,start_dim=1)
-        x = self.head(x)
-        return x
+        # print(x)
+        text = torch.nan_to_num(text, nan=-1.0)
+        text=self.MLP(text)
+        C = torch.cat([x, text], dim=1)
+        C = self.head(C)
+        return C
 
 
-medmamba_t = VSSM(depths=[2, 2, 4, 2],dims=[96,192,384,768],num_classes=6).to("cuda")
-medmamba_s = VSSM(depths=[2, 2, 8, 2],dims=[96,192,384,768],num_classes=6).to("cuda")
-medmamba_b = VSSM(depths=[2, 2, 12, 2],dims=[128,256,512,1024],num_classes=6).to("cuda")
-
-data = torch.randn(1,3,224,224).to("cuda")
-
-print(medmamba_t(data).shape)
+# medmamba_t = VSSM(depths=[2, 2, 4, 2],dims=[96,192,384,768],num_classes=6).to("cuda")
+# medmamba_s = VSSM(depths=[2, 2, 8, 2],dims=[96,192,384,768],num_classes=6).to("cuda")
+# medmamba_b = VSSM(depths=[2, 2, 12, 2],dims=[128,256,512,1024],num_classes=6).to("cuda")
+#
+# data = torch.randn(1,3,224,224).to("cuda")
+#
+# print(medmamba_t(data).shape)
