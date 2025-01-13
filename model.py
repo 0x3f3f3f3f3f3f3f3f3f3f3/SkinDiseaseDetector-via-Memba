@@ -15,11 +15,11 @@ except:
     pass
 
 # an alternative for mamba_ssm (in which causal_conv1d is needed)
-try:
-    from selective_scan import selective_scan_fn as selective_scan_fn_v1
-    from selective_scan import selective_scan_ref as selective_scan_ref_v1
-except:
-    pass
+# try:
+#     from selective_scan import selective_scan_fn as selective_scan_fn_v1
+#     from selective_scan import selective_scan_ref as selective_scan_ref_v1
+# except:
+#     pass
 
 DropPath.__repr__ = lambda self: f"timm.DropPath({self.drop_prob})"
 

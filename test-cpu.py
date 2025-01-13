@@ -22,8 +22,7 @@ class ImageFolderWithName(datasets.ImageFolder):
         filename = os.path.basename(path)
         return sample, target, filename
 def main():
-    device = torch.device("cpu")
-    print("using {} device.".format(device))
+    device = torch.device('cpu')
     #photoDataProcessor
     data_transform = {
         "train": transforms.Compose([transforms.RandomResizedCrop(224),
@@ -36,7 +35,7 @@ def main():
 
 
 
-    batch_size = 32
+    batch_size = 1
     nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])
     print('Using {} dataloader workers every process'.format(nw))
 
@@ -89,69 +88,44 @@ def main():
     net = medmamba(MLP_input_dim=65, MLP_hidden_dims=hidden_dims, num_classes=6)
     sta = torch.load('/root/code_file/MedMamba/MultiMedmambaLargeNet.pth', map_location=torch.device('cpu'))
     net.load_state_dict(sta)
+    net = net.to(device)
     total_params = sum(p.numel() for p in net.parameters())
     print(f"Total Parameters: {total_params}")
-    net.to(device)
+
 
     # test
     net.eval()
     acc = 0.0
 
     num_classes = 6
-    accuracy = MulticlassAccuracy(num_classes=num_classes).to(device)
-    precision = MulticlassPrecision(num_classes=num_classes, average='macro').to(device)
-    recall = MulticlassRecall(num_classes=num_classes, average='macro').to(device)
-    f1_score = MulticlassF1Score(num_classes=num_classes, average='macro').to(device)
-    auroc = MulticlassAUROC(num_classes=num_classes).to(device)
-    specificity_metric = MulticlassSpecificity(num_classes=num_classes, average=None).to(device)
-    criterion = torch.nn.CrossEntropyLoss()
-    running_loss = 0.0
     with torch.no_grad():
         test_bar = tqdm(test_loader, file=sys.stdout)
         for test_data in test_bar:
             #test
             test_images, test_labels,test_filename = test_data
+            test_images=test_images.to(device)
+            test_labels=test_labels.to(device)
+            test_filename=test_filename
             test_text = np.full((test_images.shape[0], X_test.shape[1]), 0.0, dtype=np.float32)
             for i in range(test_images.shape[0]):
                 j = test_filename[i]
                 test_text[i] = X_test[test_name_to_idx[j]]
             test_text = torch.from_numpy(test_text).float()
-            outputs = net(test_images.to(device),test_text.to(device))
+            test_text=test_text.to(device)
+            outputs = net(test_images,test_text)
             #loss
-            loss = criterion(outputs.to(device), test_labels.to(device))
-            running_loss += loss.item()
-            test_labels = test_labels.to(device)
 
-            outputs = torch.softmax(outputs, dim=1).to(device)
-            predict_y = torch.max(outputs, dim=1)[1].to(device)
 
-            auroc.update(outputs, test_labels)
-            accuracy.update(predict_y, test_labels)
-            precision.update(predict_y, test_labels)
-            recall.update(predict_y, test_labels)
-            f1_score.update(predict_y, test_labels)
-            specificity_metric.update(predict_y, test_labels)
-            acc += torch.eq(predict_y, test_labels.to(device)).sum().item()
+            outputs = torch.softmax(outputs, dim=1)
+            print(outputs)
+            predict_y = torch.max(outputs, dim=1)[1]
+
+            acc += torch.eq(predict_y, test_labels).sum().item()
+
 
     test_accurate = acc / test_num
-
-
-    specificity_per_class = specificity_metric.compute()
-    epoch_auc = auroc.compute()
-    prec = precision.compute()
-    rec = recall.compute()
-    f1 = f1_score.compute()
     print('Overall Accuracy: %.3f' %(test_accurate))
-    print(f"AUC: {epoch_auc:.4f}")
-    print(f"Precision: {prec:.4f}")
-    print(f"Recall (Sensitivity): {rec:.4f}")
-    print(f"F1-score: {f1:.4f}")
-    cnt=0.0
-    for i, specificity in enumerate(specificity_per_class):
-        print(f"Specificity for Class {i}: {specificity:.4f}")
-        cnt+=specificity
-    print(f"Average Specificity: {cnt/6:.4f}")
-    print("-" * 50)
+
 
     print('Finished Testing')
 
