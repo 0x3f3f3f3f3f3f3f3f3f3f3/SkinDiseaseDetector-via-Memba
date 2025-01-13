@@ -743,14 +743,6 @@ class VSSM(nn.Module):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
 
     def _init_weights(self, m: nn.Module):
-        """
-        out_proj.weight which is previously initilized in SS_Conv_SSM, would be cleared in nn.Linear
-        no fc.weight found in the any of the model parameters
-        no nn.Embedding found in the any of the model parameters
-        so the thing is, SS_Conv_SSM initialization is useless
-        
-        Conv2D is not intialized !!!
-        """
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=.02)
             if isinstance(m, nn.Linear) and m.bias is not None:
