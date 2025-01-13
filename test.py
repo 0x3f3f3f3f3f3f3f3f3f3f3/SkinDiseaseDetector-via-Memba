@@ -41,7 +41,7 @@ def main():
     print('Using {} dataloader workers every process'.format(nw))
 
 
-    test_dataset = ImageFolderWithName(root="/root/autodl-tmp/dataset/skinDisease_split/test",
+    test_dataset = ImageFolderWithName(root="/root/autodl-tmp/dataset/skinDisease_split/val",
                                         transform=data_transform["val"])
     test_num = len(test_dataset)
     test_loader = torch.utils.data.DataLoader(test_dataset,
@@ -49,7 +49,7 @@ def main():
                                                   num_workers=nw)
 
     #textDataProcessor
-    df_test = pd.read_csv("/root/autodl-tmp/dataset/skinDisease_split/test.csv")
+    df_test = pd.read_csv("/root/autodl-tmp/dataset/skinDisease_split/val.csv")
     df_train = pd.read_csv("/root/autodl-tmp/dataset/skinDisease_split/train.csv")
     # df_train.dropna(inplace=True)
     # df_test.dropna(inplace=True)
@@ -110,6 +110,7 @@ def main():
 
             outputs = net(test_images.to(device),test_text.to(device))
             predict_y = torch.max(outputs, dim=1)[1]
+            print(predict_y)
             acc += torch.eq(predict_y, test_labels.to(device)).sum().item()
 
     test_accurate = acc / test_num
