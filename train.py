@@ -33,7 +33,6 @@ def main():
         "val": transforms.Compose([transforms.Resize((224, 224)),
                                    transforms.ToTensor(),
                                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])}
-
     train_dataset = ImageFolderWithName(root="/root/autodl-tmp/dataset/skinDisease_split/train",
                                          transform=data_transform["train"])
     train_num = len(train_dataset)
