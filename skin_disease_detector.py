@@ -9,11 +9,11 @@ from torchvision import transforms, datasets
 import torch.optim as optim
 from tqdm import tqdm
 import pandas as pd
-from model import VSSM as medmamba
+from mamba_model import VSSM as medmamba
 from torchmetrics.classification import MulticlassSpecificity, MulticlassAUROC, MulticlassAccuracy, MulticlassPrecision, \
     MulticlassRecall, MulticlassF1Score
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from pre_model import CNN
+from pre_CNN_model import CNN
 
 
 class ImageFolderWithName(datasets.ImageFolder):

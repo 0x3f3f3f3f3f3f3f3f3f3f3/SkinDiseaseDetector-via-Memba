@@ -59,7 +59,7 @@ if __name__ == "__main__":
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     best_val_acc = 0.0
-    best_model_path = 'preCNN.pth'
+    best_model_path = 'state_dict/preCNN.pth'
 
 
     for epoch in range(num_epochs):
