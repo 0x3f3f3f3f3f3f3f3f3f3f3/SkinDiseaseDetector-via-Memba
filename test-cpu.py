@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import numpy as np
+from PIL import Image
 import torch
 import torch.nn as nn
 from torchvision import transforms, datasets
@@ -37,11 +38,15 @@ def main():
 
     batch_size = 1
     nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])
-    print('Using {} dataloader workers every process'.format(nw))
 
 
-    test_dataset = ImageFolderWithName(root="/root/autodl-tmp/dataset/skinDisease_split/test",
-                                        transform=data_transform["val"])
+    # test_dataset = ImageFolderWithName(root="/root/autodl-tmp/dataset/skinDisease_split/test",
+    #                                     transform=data_transform["val"])
+    image_path="/root/autodl-tmp/dataset/skinDisease_split/test/MEL/PAT_109_868_723.png"
+    test_dataset = Image.open(image_path)
+    test_dataset=data_transform["val"](test_dataset)
+
+    test_dataset=test_dataset.unsqueeze(0)
     test_num = len(test_dataset)
     test_loader = torch.utils.data.DataLoader(test_dataset,
                                                   batch_size=batch_size, shuffle=False,
@@ -90,7 +95,6 @@ def main():
     net.load_state_dict(sta)
     net = net.to(device)
     total_params = sum(p.numel() for p in net.parameters())
-    print(f"Total Parameters: {total_params}")
 
 
     # test
@@ -102,14 +106,12 @@ def main():
         test_bar = tqdm(test_loader, file=sys.stdout)
         for test_data in test_bar:
             #test
-            test_images, test_labels,test_filename = test_data
+            test_images= test_data
+            test_filename=os.path.basename(image_path)
             test_images=test_images.to(device)
-            test_labels=test_labels.to(device)
-            test_filename=test_filename
             test_text = np.full((test_images.shape[0], X_test.shape[1]), 0.0, dtype=np.float32)
-            for i in range(test_images.shape[0]):
-                j = test_filename[i]
-                test_text[i] = X_test[test_name_to_idx[j]]
+            j = test_name_to_idx[test_filename]
+            test_text[0] = X_test[j]
             test_text = torch.from_numpy(test_text).float()
             test_text=test_text.to(device)
             outputs = net(test_images,test_text)
@@ -117,17 +119,15 @@ def main():
 
 
             outputs = torch.softmax(outputs, dim=1)
-            print(outputs)
-            predict_y = torch.max(outputs, dim=1)[1]
 
-            acc += torch.eq(predict_y, test_labels).sum().item()
-
-
-    test_accurate = acc / test_num
-    print('Overall Accuracy: %.3f' %(test_accurate))
+            predict_y,prob = torch.max(outputs, dim=1)
+            print(predict_y)
+            print(prob)
 
 
-    print('Finished Testing')
+
+
+
 
 
 if __name__ == '__main__':
