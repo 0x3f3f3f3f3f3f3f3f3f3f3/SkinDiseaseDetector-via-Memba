@@ -12,6 +12,7 @@ from model import VSSM as medmamba
 
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 class ImageFolderWithName(datasets.ImageFolder):
+
     def __getitem__(self, index: int):
         path, target = self.samples[index]
         sample = self.loader(path)
