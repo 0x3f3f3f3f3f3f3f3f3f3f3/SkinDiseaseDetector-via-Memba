@@ -1,17 +1,12 @@
 import os
 import sys
-import json
 import numpy as np
 from PIL import Image
 import torch
-import torch.nn as nn
 from torchvision import transforms, datasets
-import torch.optim as optim
 from tqdm import tqdm
 import pandas as pd
-from mamba_model import VSSM as medmamba
-from torchmetrics.classification import MulticlassSpecificity, MulticlassAUROC, MulticlassAccuracy, MulticlassPrecision, \
-    MulticlassRecall, MulticlassF1Score
+from MedMamba.mamba.mamba_model import VSSM as medmamba
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from pre_CNN_model import CNN
 
