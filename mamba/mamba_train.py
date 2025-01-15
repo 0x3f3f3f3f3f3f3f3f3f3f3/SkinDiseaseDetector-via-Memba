@@ -8,7 +8,7 @@ from torchvision import transforms, datasets
 import torch.optim as optim
 from tqdm import tqdm
 import pandas as pd
-from mamba_model import VSSM as medmamba
+from MedMamba.mamba_model import VSSM as medmamba
 
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 class ImageFolderWithName(datasets.ImageFolder):

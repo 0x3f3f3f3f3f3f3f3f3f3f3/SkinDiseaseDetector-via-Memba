@@ -6,7 +6,7 @@ import torch
 from torchvision import transforms, datasets
 from tqdm import tqdm
 import pandas as pd
-from MedMamba.mamba.mamba_model import VSSM as medmamba
+from mamba_model import VSSM as medmamba
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from pre_CNN_model import CNN
 

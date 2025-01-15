@@ -1,14 +1,11 @@
 import os
 import sys
-import json
 import numpy as np
 import torch
-import torch.nn as nn
 from torchvision import transforms, datasets
-import torch.optim as optim
 from tqdm import tqdm
 import pandas as pd
-from mamba_model import VSSM as medmamba
+from MedMamba.mamba_model import VSSM as medmamba
 from torchmetrics.classification import MulticlassSpecificity,MulticlassAUROC,MulticlassAccuracy, MulticlassPrecision, MulticlassRecall, MulticlassF1Score
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 class ImageFolderWithName(datasets.ImageFolder):
